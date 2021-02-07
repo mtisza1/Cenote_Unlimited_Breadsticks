@@ -219,7 +219,7 @@ if [ ! -z "$CONTIGS_NON_CIRCULAR" ] ;then
 			echo ">"${ORF_NAME} "["$START_BASE" - "$END_BASE"]" ; echo $AA_SEQ ; 
 		done > ${NO_END%.fasta}.AA.sorted.fasta
 	done
-	if [[ $LARGE_GENOME = "False" ]]
+	if [[ $LARGE_GENOME = "False" ]] ; then
 		# Looking for non-circular contigs without ITRs that have at least 1 virus-specific domain
 
 		MDYT=$( date +"%m-%d-%y---%T" )

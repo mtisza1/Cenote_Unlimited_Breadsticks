@@ -35,10 +35,10 @@ fi
 conda env create --file cenote_shortcut_env.yml
 conda activate cenote_shortcut_env
 
-conda info --envs | sed 's/ \+/ /g' | if grep -q "cenote-taker2_env \*" ; then 
-	echo "cenote-taker2_env loaded" ; 
+conda info --envs | sed 's/ \+/ /g' | if grep -q "cenote_shortcut_env \*" ; then 
+	echo "cenote_shortcut_env loaded" ; 
 else 
-	echo "cenote-taker2_env not loaded correctly" ;
+	echo "cenote_shortcut_env not loaded correctly" ;
 	exit 
 fi
 
@@ -69,4 +69,5 @@ else
 fi
 
 echo "cenote_shortcut should now run. Use: python /path/to/Cenote_Shortcut/cenote_shortcut.py"
-
+MDYT=$( date +"%m-%d-%y---%T" )
+echo "time update, FINISHED: " $MDYT

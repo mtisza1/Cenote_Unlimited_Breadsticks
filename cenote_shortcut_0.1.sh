@@ -453,7 +453,7 @@ LIST_OF_VIRAL_DOMAIN_CONTIGS=$( find * -maxdepth 1 -type f -wholename "no_end_co
 if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ;then
 	echo "$(tput setaf 3) Starting annotation of contigs with viral domains but are neither circular nor have ITRs $(tput sgr 0)"
 
-	#. ${CENOTE_SCRIPT_DIR}/annotation_of_linear_contigs_prune_seg2.0.1.sh
+	. ${CENOTE_SCRIPT_DIR}/prune_linear_contigs_0.1.sh
 fi
 
 

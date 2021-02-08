@@ -451,11 +451,11 @@ cd ${base_directory}/${run_title}
 echo "ORIGINAL_NAME	CENOTE_NAME	END_FEATURE	LENGTH	NUM_HALLMARKS	HALLMARK_NAMES" > ${run_title}_CONTIG_SUMMARY.tsv
 CIRCULAR_HALLMARK_CONTIGS=$( find * -maxdepth 1 -type f -wholename "DTR_contigs_with_viral_domain/*fna" )
 
-if [ -n $CIRCULAR_HALLMARK_CONTIGS ] ; then
+if [ -n "$CIRCULAR_HALLMARK_CONTIGS" ] ; then
 	for LINEAR in $CIRCULAR_HALLMARK_CONTIGS ; do 
 		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
 		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
-		LENGTH=$( bioawk -c fastx '{print length($seq)' $LINEAR )
+		LENGTH=$( bioawk -c fastx '{print length($seq)}' $LINEAR )
 		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
 		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
 		END_FEATURE="DTR"
@@ -466,11 +466,11 @@ fi
 
 LIST_OF_VIRAL_DOMAIN_CONTIGS=$( find * -maxdepth 1 -type f -wholename "no_end_contigs_with_viral_domain/*fna" )
 
-if [ -n $LIST_OF_VIRAL_DOMAIN_CONTIGS ] ; then
+if [ -n "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ; then
 	for LINEAR in $LIST_OF_VIRAL_DOMAIN_CONTIGS ; do 
 		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
 		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
-		LENGTH=$( bioawk -c fastx '{print length($seq)' $LINEAR )
+		LENGTH=$( bioawk -c fastx '{print length($seq)}' $LINEAR )
 		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
 		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
 		END_FEATURE="None"

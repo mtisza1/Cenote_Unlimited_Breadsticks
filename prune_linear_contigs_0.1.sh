@@ -7,7 +7,7 @@ cd no_end_contigs_with_viral_domain/
 echo "pruning script opened"
 vd_fastas=$( find * -maxdepth 0 -type f -name "*.fna" )
 
-if [ -n $vd_fastas ] ; then
+if [ -n "$vd_fastas" ] ; then
 	echo "fna files found"
 	for NO_END in $vd_fastas ; do
 		LENGTH_SEQ=$( bioawk -c fastx '{print length($seq)}' $NO_END )
@@ -71,7 +71,7 @@ if [ -n $vd_fastas ] ; then
 		done
 	fi
 	CALLED_VIRAL=$( find * -maxdepth 0 -type f -name "*.AA.called_hmmscan2.txt" )
-	if [ -n $CALLED_VIRAL ] ; then
+	if [ -n "$CALLED_VIRAL" ] ; then
 		for NO_END in $CALLED_VIRAL ; do
 			cat $NO_END | while read LINE ; do 
 				PROTEIN_INFO=$( grep "$LINE \[" ${NO_END%.AA.called_hmmscan2.txt}.AA.sorted1.fasta ) ;  
@@ -115,7 +115,7 @@ if [ -n $vd_fastas ] ; then
 	fi
 	### redo RPS part
 	NO_HMMSCAN_AA=$( find * -maxdepth 0 -type f -name "*.AA.no_hmmscan2.fasta" )
-	if [ -n $NO_HMMSCAN_AA ] ; then
+	if [ -n "$NO_HMMSCAN_AA" ] ; then
 		cat $( find * -maxdepth 0 -type f -name "*.AA.no_hmmscan2.fasta" ) > all_prunable_rps_proteins.AA.fasta
 		TOTAL_AA_SEQS=$( grep -F ">" all_prunable_rps_proteins.AA.fasta | wc -l | bc )
 		AA_SEQS_PER_FILE=$( echo "scale=0 ; $TOTAL_AA_SEQS / $CPU" | bc )
@@ -245,7 +245,7 @@ fi
 
 POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex "*_vs[0-9]\{1,2\}.fna" )
 
-if [ -n $POST_PRUNE_CONTIGS ] ; then
+if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: Making prophage table " $MDYT
 	echo "SEQUENCE_FILE	CENOTE_PARENT_NAME	INPUT_PARENT_NAME	FINAL_LENGTH	PARENT_LENGTH	PRUNING_TRIED	CHROM_REMOVED	LEFT_JUNCTION	RIGHT_JUNCTION	HALLMARK_GENES	HALLMARK_AA_NAMES" > ${run_title}_PRUNING_INFO_TABLE.tsv

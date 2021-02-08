@@ -103,7 +103,7 @@ if [ ${original_contigs: -6} == ".fasta" ]; then
 	echo "$(tput setaf 5)File with .fasta extension detected, attempting to keep contigs over $LENGTH_MINIMUM nt and find circular sequences with apc.pl$(tput sgr 0)"
 	bioawk -v run_var="$run_title" -v contig_cutoff="$LENGTH_MINIMUM" -c fastx '{ if(length($seq) > contig_cutoff) { print ">"run_var NR" "$name; print $seq }}' $original_contigs > ${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta ;
 	cd $run_title
-	echo "cenote_shortcut" > ${run_title}.tsv
+	echo "cenote_shortcut" > ${run_title}_CONTIG_SUMMARY.tsv
 	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta ;
 	rm -f apc_aln*
 	APC_CIRCS=$( find * -maxdepth 0 -type f -name "${run_title}*.fa" )
@@ -120,7 +120,7 @@ if [ ${original_contigs: -6} == ".fasta" ]; then
 elif [ ${original_contigs: -6} == ".fastg" ]; then
 	bioawk -v contig_cutoff="$LENGTH_MINIMUM" -c fastx '{ if(length($seq) > contig_cutoff) {print }}' $original_contigs | grep "[a-zA-Z0-9]:\|[a-zA-Z0-9];" | grep -v "':" | awk '{ print ">"$1 ; print $2 }' | sed 's/:.*//g; s/;.*//g' | bioawk -v run_var="$run_title" -c fastx '{ print ">"run_var NR" "$name; print $seq }' > ${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta
 	cd $run_title
-	echo "cenote-taker2" > ${run_title}.tsv
+	echo "cenote_shortcut" > ${run_title}_CONTIG_SUMMARY.tsv
 	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta ;
 	rm -f apc_aln*
 	APC_CIRCS=$( find * -maxdepth 0 * -type f -name "${run_title}*.fa" )
@@ -429,6 +429,7 @@ if [ ! -z "$CIRCLES_AND_ITRS" ] ; then
 				grep "${HIT}_" CIRCULAR_GENOME_COMBINED.AA.hmmscan.sort.out | sort -u -k3,3 | cut -f3 > ${HIT}.AA.called_hmmscan.txt
 				grep -v -f ${HIT}.AA.called_hmmscan.txt ${HIT}.AA.sorted.fasta | grep -A1 ">" | sed '/--/d' > DTR_contigs_with_viral_domain/${HIT}.AA.no_hmmscan1.fasta
 				mv ${HIT}.AA.sorted.fasta DTR_contigs_with_viral_domain/
+				rm ${HIT}.AA.fasta
 
 			else
 				cat ${HIT}.fasta >> non_viral_domains_contigs.fna
@@ -456,13 +457,15 @@ if [ -n "$CIRCULAR_HALLMARK_CONTIGS" ] ; then
 		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
 		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
 		LENGTH=$( bioawk -c fastx '{print length($seq)}' $LINEAR )
-		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
+		NUM_HALLMARKS=$( cat ${LINEAR%.fna}.AA.hmmscan.sort.out | wc -l | bc )
 		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
 		END_FEATURE="DTR"
 		echo "${ORIGINAL_NAME}	${CENOTE_NAME}	${END_FEATURE}	${LENGTH}	${NUM_HALLMARKS}	${HALLMARK_NAMES}" >> ${run_title}_CONTIG_SUMMARY.tsv
 	done
 fi
 
+mv all_circular_genome_proteins.AA.fasta DTR_contigs_with_viral_domain/
+mv CIRCULAR_GENOME_COMBINED.AA.hmmscan.sort.out DTR_contigs_with_viral_domain/
 
 LIST_OF_VIRAL_DOMAIN_CONTIGS=$( find * -maxdepth 1 -type f -wholename "no_end_contigs_with_viral_domain/*fna" )
 
@@ -471,7 +474,7 @@ if [ -n "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ; then
 		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
 		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
 		LENGTH=$( bioawk -c fastx '{print length($seq)}' $LINEAR )
-		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
+		NUM_HALLMARKS=$( cat ${LINEAR%.fna}.AA.hmmscan.sort.out | wc -l | bc )
 		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
 		END_FEATURE="None"
 		echo "${ORIGINAL_NAME}	${CENOTE_NAME}	${END_FEATURE}	${LENGTH}	${NUM_HALLMARKS}	${HALLMARK_NAMES}" >> ${run_title}_CONTIG_SUMMARY.tsv
@@ -480,8 +483,8 @@ fi
 
 ### script for annotating no_end contigs with viral domains
 
-if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ;then
-	echo "$(tput setaf 3) Starting annotation of contigs with viral domains but are neither circular nor have ITRs $(tput sgr 0)"
+if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] && [ "$PROPHAGE" == "True" ] ;then
+	echo "$(tput setaf 3) Starting prung of non-DTR/circular contigs with viral domains $(tput sgr 0)"
 
 	. ${CENOTE_SCRIPT_DIR}/prune_linear_contigs_0.1.sh
 fi
@@ -489,11 +492,32 @@ fi
 
 cd ${base_directory}/${run_title}
 
-### make summary tables
+### make combined virus seq file
+if [ -n "$CIRCULAR_HALLMARK_CONTIGS" ] ; then
+	for CIRC in $CIRCULAR_HALLMARK_CONTIGS ; do
+		sed 's/ /#/g' $CIRC | bioawk -c fastx '{print ">"$name" DTR" ; print $seq}' | sed 's/#/ /g' >> final_combined_virus_sequences_${run_title}.fna
+	done
+fi
+if [ "$PROPHAGE" == "True" ] ;then
+	LINEAR_HALLMARK_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex ".*_vs[0-9]\{1,2\}.fna" )
+	if [ -n "$LINEAR_HALLMARK_CONTIGS" ] ; then
+		for LIN in $LINEAR_HALLMARK_CONTIGS ; do
+			ORIGINAL_NAME=$( head -n1 ${LIN%_vs[0-9][0-9].fna}.fna | cut -d " " -f2 )
+			sed 's/ /#/g' $LIN | bioawk -v ORI="$ORIGINAL_NAME" -c fastx '{print ">"$name" "ORI" no_end_feature" ; print $seq}' | sed 's/#/ /g' >> final_combined_virus_sequences_${run_title}.fna
+		done
+	fi
+else
+	if [ -n "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ; then
+		for LIN in $LIST_OF_VIRAL_DOMAIN_CONTIGS ; do
+			sed 's/ /#/g' $LIN | bioawk -c fastx '{print ">"$name" no_end_feature" ; print $seq}' | sed 's/#/ /g' >> final_combined_virus_sequences_${run_title}.fna
+		done
+	fi
+fi		
+
 
 echo "removing ancillary files"
 
-rm -f *.all_start_stop.txt *.bad_starts.txt *.comb.tbl *.comb2.tbl *.good_start_orfs.txt *.hypo_start_stop.txt *.nucl_orfs.fa *.remove_hypo.txt *.log *.promer.contigs_with_ends.fa *.promer.promer *.out.hhr *.starting_orf.txt *.out.hhr *.nucl_orfs.txt *.called_hmmscan.txt *.hmmscan_replicate.out *.hmmscan.out *.rotate.no_hmmscan.fasta *.starting_orf.1.fa *.phan.*fasta *used_positions.txt *.prodigal.for_prodigal.fa *.prodigal.gff *.trnascan-se2.txt *.for_blastp.txt *.for_hhpred.txt circular_contigs_spades_names.txt SPLIT_CIRCULAR_AA*fasta
+rm -f *.all_start_stop.txt *.bad_starts.txt *.comb.tbl *.comb2.tbl *.good_start_orfs.txt *.hypo_start_stop.txt *.nucl_orfs.fa *.remove_hypo.txt *.log *.promer.contigs_with_ends.fa *.promer.promer *.out.hhr *.starting_orf.txt *.out.hhr *.nucl_orfs.txt *.called_hmmscan.txt *.hmmscan_replicate.out *.hmmscan.out *.rotate.no_hmmscan.fasta *.starting_orf.1.fa *.phan.*fasta *used_positions.txt *.prodigal.for_prodigal.fa *.prodigal.gff *.trnascan-se2.txt *.for_blastp.txt *.for_hhpred.txt circular_contigs_spades_names.txt SPLIT_CIRCULAR_AA*fasta all_circular_contigs_${run_title}.fna
 rm -rf bt2_indices/
 rm -f other_contigs/*.AA.fasta other_contigs/*.AA.sorted.fasta other_contigs/*.out other_contigs/*.dat other_contigs/*called_hmmscan.txt other_contigs/SPLIT_LARGE_GENOME_AA_*fasta
 rm -f no_end_contigs_with_viral_domain/*.called_hmmscan2.txt no_end_contigs_with_viral_domain/*.hmmscan2.out no_end_contigs_with_viral_domain/*all_hhpred_queries.AA.fasta no_end_contigs_with_viral_domain/*.all_start_stop.txt no_end_contigs_with_viral_domain/*.trnascan-se2.txt no_end_contigs_with_viral_domain/*.for_hhpred.txt no_end_contigs_with_viral_domain/*.for_blastp.txt no_end_contigs_with_viral_domain/*.HH.tbl no_end_contigs_with_viral_domain/*.hypo_start_stop.txt  no_end_contigs_with_viral_domain/*.remove_hypo.txt no_end_contigs_with_viral_domain/*.rps_nohits.fasta no_end_contigs_with_viral_domain/*.tax_guide.blastx.tab no_end_contigs_with_viral_domain/*.tax_orf.fasta no_end_contigs_with_viral_domain/*.trans.fasta no_end_contigs_with_viral_domain/*.called_hmmscan*.txt no_end_contigs_with_viral_domain/*.no_hmmscan*.fasta no_end_contigs_with_viral_domain/*.comb*.tbl 

@@ -27,22 +27,12 @@ if [ -n "$vd_fastas" ] ; then
 					PROTEIN_INFO=$( grep "$LINE \[" ${NO_END%.fna}.AA.sorted1.fasta ) ;  
 					START_BASEH=$( echo $PROTEIN_INFO | sed 's/.*\[\(.*\) -.*/\1/' ) ; 
 					END_BASEH=$( echo $PROTEIN_INFO | sed 's/.*- \(.*\)\].*/\1/' ) ; 
-					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan.sort.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
+					HMM_INFO=$( grep "$LINE	" ${NO_END%.fna}.AA.hmmscan.sort.out | head -n1 | cut -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
 					INFERENCEH=$( echo $HMM_INFO | cut -d " " -f1 ) ; 
 					echo -e "$LINE\t$START_BASEH\t$END_BASEH\t$INFERENCEH\t$HMM_INFO"
 				done > ${NO_END%.fna}.VIRUS_BAIT_TABLE.txt
 			fi
-			if [ ! -z "${NO_END%.fna}.AA.hmmscan_replicate.sort.out" ] ; then
-				cut -f3 ${NO_END%.fna}.AA.hmmscan_replicate.sort.out | awk '{ print $0" " }' > ${NO_END%.fna}.AA.called_hmmscan_rep.txt ; 
-				cat ${NO_END%.fna}.AA.called_hmmscan_rep.txt | while read LINE ; do 
-					PROTEIN_INFO=$( grep "$LINE \[" ${NO_END%.fna}.AA.sorted1.fasta ) ;  
-					START_BASEH=$( echo $PROTEIN_INFO | sed 's/.*\[\(.*\) -.*/\1/' ) ; 
-					END_BASEH=$( echo $PROTEIN_INFO | sed 's/.*- \(.*\)\].*/\1/' ) ; 
-					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan_replicate.sort.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
-					INFERENCEH=$( echo $HMM_INFO | cut -d " " -f1 ) ; 
-					echo -e "$LINE\t$START_BASEH\t$END_BASEH\t$INFERENCEH\t$HMM_INFO"
-				done >> ${NO_END%.fna}.VIRUS_BAIT_TABLE.txt
-			fi
+
 		fi
 	done
 
@@ -257,7 +247,7 @@ if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 			LEFT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f1 )
 			RIGHT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f2 )
 			PRUNING_TRIED="True"
-			if [ $LEFT_COORD == 1 ] && [ $RIGHT_COORD == $PARENT_LENGTH ] ; then
+			if [ $LEFT_COORD == 0 ] && [ $RIGHT_COORD == $PARENT_LENGTH ] ; then
 				CHROM_REMOVED="False"
 			else
 				CHROM_REMOVED="True"
@@ -283,7 +273,7 @@ if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ] ; then
 	mv ${run_title}_PRUNING_INFO_TABLE.tsv ../
 fi
 
-rm -f *.virus_signal.tab *.used_positions.txt *.phan.fasta *.phan.sort.fasta *rpsb.out SPLIT_PRUNE_RPS_AA*fasta
+rm -f *.virus_signal.tab *.used_positions.txt *.phan.fasta *.phan.sort.fasta *rpsb.out SPLIT_PRUNE_RPS_AA*fasta SPLIT_PRUNE_SEQ_AA*fasta
 
 cd ..
 

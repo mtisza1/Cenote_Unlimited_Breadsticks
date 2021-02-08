@@ -27,7 +27,7 @@ if [ -n $vd_fastas ] ; then
 					PROTEIN_INFO=$( grep "$LINE \[" ${NO_END%.fna}.AA.sorted1.fasta ) ;  
 					START_BASEH=$( echo $PROTEIN_INFO | sed 's/.*\[\(.*\) -.*/\1/' ) ; 
 					END_BASEH=$( echo $PROTEIN_INFO | sed 's/.*- \(.*\)\].*/\1/' ) ; 
-					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
+					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan.sort.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
 					INFERENCEH=$( echo $HMM_INFO | cut -d " " -f1 ) ; 
 					echo -e "$LINE\t$START_BASEH\t$END_BASEH\t$INFERENCEH\t$HMM_INFO"
 				done > ${NO_END%.fna}.VIRUS_BAIT_TABLE.txt
@@ -38,7 +38,7 @@ if [ -n $vd_fastas ] ; then
 					PROTEIN_INFO=$( grep "$LINE \[" ${NO_END%.fna}.AA.sorted1.fasta ) ;  
 					START_BASEH=$( echo $PROTEIN_INFO | sed 's/.*\[\(.*\) -.*/\1/' ) ; 
 					END_BASEH=$( echo $PROTEIN_INFO | sed 's/.*- \(.*\)\].*/\1/' ) ; 
-					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan_replicate.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
+					HMM_INFO=$( grep "$LINE " ${NO_END%.fna}.AA.hmmscan_replicate.sort.out | head -n1 | cut -d " " -f1 | sed 's/-/ /g; s/.*[0-9]\+\///g' ) ; 
 					INFERENCEH=$( echo $HMM_INFO | cut -d " " -f1 ) ; 
 					echo -e "$LINE\t$START_BASEH\t$END_BASEH\t$INFERENCEH\t$HMM_INFO"
 				done >> ${NO_END%.fna}.VIRUS_BAIT_TABLE.txt
@@ -134,10 +134,6 @@ if [ -n $vd_fastas ] ; then
 	cut -f1 COMBINED_RESULTS.RPS_TABLE.txt | sed 's/[^_]*$//' | sed 's/\(.*\)_/\1/' | sort -u | while read CONTIG ; do
 		grep "^${CONTIG}_" COMBINED_RESULTS.RPS_TABLE.txt > ${CONTIG}.RPS_TABLE.txt
 	done
-
-
-
-
 
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: parsing tables into virus_signal.seq files for hmmscan and rpsblast outputs " $MDYT
@@ -245,7 +241,25 @@ else
 	fi
 fi
 
-rm -f *.virus_signal.tab *.used_positions.txt *.phan.fasta *.phan.sort.fasta
+POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex "*_vs[0-9]\{1,2\}.fna" )
+
+if [ -n $POST_PRUNE_CONTIGS ] ; then
+	for CONTIG in $POST_PRUNE_CONTIGS ; do
+		if grep -q "putative_virus" $CONTIG ; then
+			LEFT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f1 )
+			RIGHT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f2 )
+			ORIGINAL_NAME=$( head -n1 ${CONTIG%_vs[0-9][0-9].fna}.fna )
+		fi
+		CENOTE_PARENT=${CONTIG%_vs[0-9][0-9].fna}.fna
+		### finish this
+
+
+	done
+fi
+
+
+
+rm -f *.virus_signal.tab *.used_positions.txt *.phan.fasta *.phan.sort.fasta *rpsb.out SPLIT_PRUNE_RPS_AA*fasta
 
 cd ..
 

@@ -448,8 +448,37 @@ fi
 
 cd ${base_directory}/${run_title}
 
-### script for annotating no_end contigs with viral domains
+echo "ORIGINAL_NAME	CENOTE_NAME	END_FEATURE	LENGTH	NUM_HALLMARKS	HALLMARK_NAMES" > ${run_title}_CONTIG_SUMMARY.tsv
+CIRCULAR_HALLMARK_CONTIGS=$( find * -maxdepth 1 -type f -wholename "DTR_contigs_with_viral_domain/*fna" )
+
+if [ -n $CIRCULAR_HALLMARK_CONTIGS ] ; then
+	for LINEAR in $CIRCULAR_HALLMARK_CONTIGS ; do 
+		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
+		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
+		LENGTH=$( bioawk -c fastx '{print length($seq)' $LINEAR )
+		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
+		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
+		END_FEATURE="DTR"
+		echo "${ORIGINAL_NAME}	${CENOTE_NAME}	${END_FEATURE}	${LENGTH}	${NUM_HALLMARKS}	${HALLMARK_NAMES}" >> ${run_title}_CONTIG_SUMMARY.tsv
+	done
+fi
+
+
 LIST_OF_VIRAL_DOMAIN_CONTIGS=$( find * -maxdepth 1 -type f -wholename "no_end_contigs_with_viral_domain/*fna" )
+
+if [ -n $LIST_OF_VIRAL_DOMAIN_CONTIGS ] ; then
+	for LINEAR in $LIST_OF_VIRAL_DOMAIN_CONTIGS ; do 
+		CENOTE_NAME=$( head -n1 $LINEAR | cut -d " " -f1 | sed 's/>//g' )
+		ORIGINAL_NAME=$( head -n1 $LINEAR | cut -d " " -f2 )
+		LENGTH=$( bioawk -c fastx '{print length($seq)' $LINEAR )
+		NUM_HALLMARKS=$( wc -l ${LINEAR%.fna}.AA.hmmscan.sort.out | bc )
+		HALLMARK_NAMES=$( cut -f1 ${LINEAR%.fna}.AA.hmmscan.sort.out | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' | sort -u | sed 's/,//g' )
+		END_FEATURE="None"
+		echo "${ORIGINAL_NAME}	${CENOTE_NAME}	${END_FEATURE}	${LENGTH}	${NUM_HALLMARKS}	${HALLMARK_NAMES}" >> ${run_title}_CONTIG_SUMMARY.tsv
+	done
+fi
+
+### script for annotating no_end contigs with viral domains
 
 if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ;then
 	echo "$(tput setaf 3) Starting annotation of contigs with viral domains but are neither circular nor have ITRs $(tput sgr 0)"
@@ -464,9 +493,9 @@ cd ${base_directory}/${run_title}
 
 echo "removing ancillary files"
 
-rm -f *.all_start_stop.txt *.bad_starts.txt *.comb.tbl *.comb2.tbl *.good_start_orfs.txt *.hypo_start_stop.txt *.nucl_orfs.fa *.remove_hypo.txt *.log *.promer.contigs_with_ends.fa *.promer.promer *.out.hhr *.starting_orf.txt *.out.hhr *.nucl_orfs.txt *.called_hmmscan.txt *.hmmscan_replicate.out *.hmmscan.out *.rotate.no_hmmscan.fasta *.starting_orf.1.fa *.phan.*fasta *used_positions.txt *.prodigal.for_prodigal.fa *.prodigal.gff *.trnascan-se2.txt *.for_blastp.txt *.for_hhpred.txt circular_contigs_spades_names.txt
+rm -f *.all_start_stop.txt *.bad_starts.txt *.comb.tbl *.comb2.tbl *.good_start_orfs.txt *.hypo_start_stop.txt *.nucl_orfs.fa *.remove_hypo.txt *.log *.promer.contigs_with_ends.fa *.promer.promer *.out.hhr *.starting_orf.txt *.out.hhr *.nucl_orfs.txt *.called_hmmscan.txt *.hmmscan_replicate.out *.hmmscan.out *.rotate.no_hmmscan.fasta *.starting_orf.1.fa *.phan.*fasta *used_positions.txt *.prodigal.for_prodigal.fa *.prodigal.gff *.trnascan-se2.txt *.for_blastp.txt *.for_hhpred.txt circular_contigs_spades_names.txt SPLIT_CIRCULAR_AA*fasta
 rm -rf bt2_indices/
-rm -f other_contigs/*.AA.fasta other_contigs/*.AA.sorted.fasta other_contigs/*.out other_contigs/*.dat other_contigs/*called_hmmscan.txt 
+rm -f other_contigs/*.AA.fasta other_contigs/*.AA.sorted.fasta other_contigs/*.out other_contigs/*.dat other_contigs/*called_hmmscan.txt other_contigs/SPLIT_LARGE_GENOME_AA_*fasta
 rm -f no_end_contigs_with_viral_domain/*.called_hmmscan2.txt no_end_contigs_with_viral_domain/*.hmmscan2.out no_end_contigs_with_viral_domain/*all_hhpred_queries.AA.fasta no_end_contigs_with_viral_domain/*.all_start_stop.txt no_end_contigs_with_viral_domain/*.trnascan-se2.txt no_end_contigs_with_viral_domain/*.for_hhpred.txt no_end_contigs_with_viral_domain/*.for_blastp.txt no_end_contigs_with_viral_domain/*.HH.tbl no_end_contigs_with_viral_domain/*.hypo_start_stop.txt  no_end_contigs_with_viral_domain/*.remove_hypo.txt no_end_contigs_with_viral_domain/*.rps_nohits.fasta no_end_contigs_with_viral_domain/*.tax_guide.blastx.tab no_end_contigs_with_viral_domain/*.tax_orf.fasta no_end_contigs_with_viral_domain/*.trans.fasta no_end_contigs_with_viral_domain/*.called_hmmscan*.txt no_end_contigs_with_viral_domain/*.no_hmmscan*.fasta no_end_contigs_with_viral_domain/*.comb*.tbl 
 
 echo " "

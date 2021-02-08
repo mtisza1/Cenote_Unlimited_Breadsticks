@@ -126,7 +126,7 @@ if [ -n $vd_fastas ] ; then
 		SPLIT_AA_RPS=$( find * -maxdepth 0 -type f -name "SPLIT_PRUNE_RPS_AA_*.fasta" )
 		MDYT=$( date +"%m-%d-%y---%T" )
 		echo "time update: running RPSBLAST on each sequence " $MDYT
-		echo "$SPLIT_AA_PRUNE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {} -line_length 200 -out {}.rpsb.out
+		echo "$SPLIT_AA_PRUNE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {}.fasta -line_length 200 -out {}.rpsb.out
 		cat *.no_hmmscan2.fasta.rpsb.out > COMBINED_RESULTS.AA.rpsblast.out
 
 	fi
@@ -150,10 +150,9 @@ if [ -n $vd_fastas ] ; then
 			for ((counter_g=(( 1 ));counter_g<=$CONTIG_LENGTH;counter_g++)); do
 				echo "$counter_g	Z"
 			done > ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
-			MDYT=$( date +"%m-%d-%y---%T" )
-			echo "replacing Zs from RPS_Table data:" $MDYT
 
-			time cat ${TABLE1%.HMMSCAN_TABLE.txt}.RPS_TABLE.txt | while read LINE ; do
+
+			cat ${TABLE1%.HMMSCAN_TABLE.txt}.RPS_TABLE.txt | while read LINE ; do
 				RPS_START=$( echo "$LINE" | cut -f2 ) ;
 				RPS_END=$( echo "$LINE" | cut -f3 ) ; 
 				INFER=$( echo "$LINE" | cut -f4 ) ;
@@ -189,12 +188,8 @@ if [ -n $vd_fastas ] ; then
 					fi
 				fi
 			done	
-			MDYT=$( date +"%m-%d-%y---%T" )
-			echo "FINISHED replacing Zs from RPS_Table data:" $MDYT
 
-			MDYT=$( date +"%m-%d-%y---%T" )
-			echo "replacing Zs from VIRUS_HMMSCAN_Table data:" $MDYT
-			time cat $TABLE1 | while read LINE ; do 
+			cat $TABLE1 | while read LINE ; do 
 				VIR_START=$( echo "$LINE" | cut -f2 ) ; 
 				VIR_END=$( echo "$LINE" | cut -f3 ) ; 
 				if [[ "$VIR_END" -gt "$VIR_START" ]] ; then 
@@ -207,8 +202,7 @@ if [ -n $vd_fastas ] ; then
 					done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab 
 				fi ; 
 			done
-			MDYT=$( date +"%m-%d-%y---%T" )
-			echo "FINISHED replacing Zs from VIRUS_HMMSCAN_Table data:" $MDYT
+
 			sort -g -k1,1 ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab | awk '!_[$1]++' | cut -f2 | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g' > ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.seq
 
 		done

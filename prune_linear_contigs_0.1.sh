@@ -4,10 +4,11 @@
 
 cd no_end_contigs_with_viral_domain/
 
-
+echo "pruning script opened"
 vd_fastas=$( find * -maxdepth 0 -type f -name "*.fna" )
 
 if [ -n $vd_fastas ] ; then
+	echo "fna files found"
 	for NO_END in $vd_fastas ; do
 		LENGTH_SEQ=$( bioawk -c fastx '{print length($seq)}' $NO_END )
 		if [[ "$LENGTH_SEQ" -lt 10000 ]] ; then 
@@ -112,7 +113,7 @@ if [ -n $vd_fastas ] ; then
 			fi
 		done
 	fi
-### redo RPS part
+	### redo RPS part
 	NO_HMMSCAN_AA=$( find * -maxdepth 0 -type f -name "*.AA.no_hmmscan2.fasta" )
 	if [ -n $NO_HMMSCAN_AA ] ; then
 		cat $( find * -maxdepth 0 -type f -name "*.AA.no_hmmscan2.fasta" ) > all_prunable_rps_proteins.AA.fasta
@@ -212,6 +213,8 @@ if [ -n $vd_fastas ] ; then
 
 		done
 	fi
+else
+	echo "fna files NOT found"
 fi
 # Run Anna's python for extracting virus segments from potential prophage
 if [ $PROPHAGE == "False" ] ; then

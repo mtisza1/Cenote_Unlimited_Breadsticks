@@ -446,6 +446,7 @@ fi
 
 
 
+cd ${base_directory}/${run_title}
 
 ### script for annotating no_end contigs with viral domains
 LIST_OF_VIRAL_DOMAIN_CONTIGS=$( find * -maxdepth 1 -type f -wholename "no_end_contigs_with_viral_domain/*fna" )
@@ -457,7 +458,7 @@ if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] ;then
 fi
 
 
-cd $base_directory/$run_title
+cd ${base_directory}/${run_title}
 
 ### make summary tables
 

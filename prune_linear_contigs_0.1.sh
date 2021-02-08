@@ -243,7 +243,7 @@ else
 	fi
 fi
 
-POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex "*_vs[0-9]\{1,2\}.fna" )
+POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex ".*_vs[0-9]\{1,2\}.fna" )
 
 if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 	MDYT=$( date +"%m-%d-%y---%T" )
@@ -279,7 +279,7 @@ if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 	done
 fi
 
-if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ]
+if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ] ; then
 	mv ${run_title}_PRUNING_INFO_TABLE.tsv ../
 fi
 

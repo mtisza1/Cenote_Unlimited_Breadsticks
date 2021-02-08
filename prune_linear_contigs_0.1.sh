@@ -211,6 +211,8 @@ if [ $PROPHAGE == "False" ] ; then
 	echo "prophages not being pruned"
 
 else
+	MDYT=$( date +"%m-%d-%y---%T" )
+	echo "time update: Identifying virus chunks, chromosomal junctions, and pruning contigs as necessary " $MDYT
 	SIGNAL_SEQ=$( find * -maxdepth 0 -type f -name "*virus_signal.seq" )
 	if [ -n "$SIGNAL_SEQ" ] ; then
 		for VSEQ in *virus_signal.seq ; do
@@ -244,23 +246,45 @@ fi
 POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex "*_vs[0-9]\{1,2\}.fna" )
 
 if [ -n $POST_PRUNE_CONTIGS ] ; then
+	MDYT=$( date +"%m-%d-%y---%T" )
+	echo "time update: Making prophage table " $MDYT
+	echo "SEQUENCE_FILE	CENOTE_PARENT_NAME	INPUT_PARENT_NAME	FINAL_LENGTH	PARENT_LENGTH	PRUNING_TRIED	CHROM_REMOVED	LEFT_JUNCTION	RIGHT_JUNCTION	HALLMARK_GENES	HALLMARK_AA_NAMES" > ${run_title}_PRUNING_INFO_TABLE.tsv
 	for CONTIG in $POST_PRUNE_CONTIGS ; do
+		CENOTE_PARENT=${CONTIG%_vs[0-9][0-9].fna}.fna
+		PARENT_LENGTH=$( bioawk -c fastx '{print length($seq)}' $CENOTE_PARENT )
+		PRUNED_LENGTH=$( bioawk -c fastx '{print length($seq)}' $CONTIG )		
 		if grep -q "putative_virus" $CONTIG ; then
 			LEFT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f1 )
 			RIGHT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f2 )
-			ORIGINAL_NAME=$( head -n1 ${CONTIG%_vs[0-9][0-9].fna}.fna )
+			PRUNING_TRIED="True"
+			if [ $LEFT_COORD == 1 ] && [ $RIGHT_COORD == $PARENT_LENGTH ] ; then
+				CHROM_REMOVED="False"
+			else
+				CHROM_REMOVED="True"
+			fi
+		else
+			LEFT_COORD="None"
+			RIGHT_COORD="None"
+			PRUNING_TRIED="False"
+			CHROM_REMOVED="False"
 		fi
-		CENOTE_PARENT=${CONTIG%_vs[0-9][0-9].fna}.fna
+		ORIGINAL_NAME=$( head -n1 ${CONTIG%_vs[0-9][0-9].fna}.fna | cut -d " " -f2 )
+
+		HALLMARK_GENES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $5}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed 's/ /_/g ; s/,//g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
+		HALLMARK_AA_NAMES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $1}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
+		echo "${CONTIG}	${CENOTE_PARENT}	${ORIGINAL_NAME}	${PRUNED_LENGTH}	${PARENT_LENGTH}	${PRUNING_TRIED}	${CHROM_REMOVED}	${LEFT_COORD}	${RIGHT_COORD}	${HALLMARK_GENES}	${HALLMARK_AA_NAMES}" >> ${run_title}_PRUNING_INFO_TABLE.tsv
 		### finish this
 
 
 	done
 fi
 
-
+if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ]
+	mv ${run_title}_PRUNING_INFO_TABLE.tsv ../
+fi
 
 rm -f *.virus_signal.tab *.used_positions.txt *.phan.fasta *.phan.sort.fasta *rpsb.out SPLIT_PRUNE_RPS_AA*fasta
 
 cd ..
 
-echo "$(tput setaf 3) FINISHED ANNOTATING CONTIGS WITHOUT CIRCULARITY OR ITRS BUT WITH AT LEAST $LIN_MINIMUM_DOMAINS VIRAL DOMAIN(S) $(tput sgr 0)"
+echo "$(tput setaf 3) FINISHED PRUNING CONTIGS WITH AT LEAST $LIN_MINIMUM_DOMAINS VIRAL DOMAIN(S) $(tput sgr 0)"

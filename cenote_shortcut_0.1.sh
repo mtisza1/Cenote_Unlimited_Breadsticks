@@ -203,7 +203,6 @@ else
 	fi
 
 fi
-echo "$(tput setaf 4)Looking for ITRs in non-circular contigs $(tput sgr 0)" 
 
 cd other_contigs
 CONTIGS_NON_CIRCULAR=$( find * -maxdepth 0 -type f -name "*[0-9].fasta" )
@@ -271,11 +270,11 @@ if [ ! -z "$CONTIGS_NON_CIRCULAR" ] ;then
 				
 				echo $NO_END "contains at least $LIN_MINIMUM_DOMAINS viral structural domain(s)"
 				if [ -s ${NO_END%.fasta}.AA.hmmscan_replicate.out ] ; then
-					cat ${NO_END%.fasta}.AA.hmmscan.sort.out ${NO_END%.fasta}.AA.hmmscan_replicate.sort.out | sort -u -k3,3 | cut -f3 > ${NO_END%.fasta}.rotate.AA.called_hmmscan.txt ; 
+					cat ${NO_END%.fasta}.AA.hmmscan.sort.out ${NO_END%.fasta}.AA.hmmscan_replicate.sort.out | sort -u -k3,3 | cut -f3 > ${NO_END%.fasta}.AA.called_hmmscan.txt ; 
 				else
-					cat ${NO_END%.fasta}.AA.hmmscan.sort.out | sort -u -k3,3 | cut -f3 > ${NO_END%.fasta}.rotate.AA.called_hmmscan.txt ; 
+					cat ${NO_END%.fasta}.AA.hmmscan.sort.out | sort -u -k3,3 | cut -f3 > ${NO_END%.fasta}.AA.called_hmmscan.txt ; 
 				fi
-				grep -v -f ${NO_END%.fasta}.rotate.AA.called_hmmscan.txt ${NO_END%.fasta}.AA.sorted.fasta | grep -A1 ">" | sed '/--/d' > ../no_end_contigs_with_viral_domain/${NO_END%.fasta}.no_hmmscan1.fasta
+				grep -v -f ${NO_END%.fasta}.AA.called_hmmscan.txt ${NO_END%.fasta}.AA.sorted.fasta | grep -A1 ">" | sed '/--/d' > ../no_end_contigs_with_viral_domain/${NO_END%.fasta}.no_hmmscan1.fasta
 				echo ">Feature "${NO_END%.fasta}" Table1" > ../no_end_contigs_with_viral_domain/${NO_END%.fasta}.SCAN.tbl
 
 				mv $NO_END ../no_end_contigs_with_viral_domain/${NO_END%.fasta}.fna

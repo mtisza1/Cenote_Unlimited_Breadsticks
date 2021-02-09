@@ -2,9 +2,9 @@
 Cenote Shortcut uses probabilistic models (i.e. HMMs) of virus hallmark genes to identify virus sequences from any dataset of contigs (e.g. metagenomic assemblies) or genomes (e.g. bacterial genomes). Optionally, Cenote Shortcut will use gene content information to remove flanking cellular chromosomes from contigs representing putative prophages. Generally, the prophage-cellular chromosome boundary will be identified within 100 nt - 2000 nt of the actual location.
 
 ```diff
-The code is currently functional. Feel free to Cenote Shortcut at will.
+- The code is currently functional. Feel free to Cenote Shortcut at will.
 ```
-Cenote Shortcut is derived entirely from Cenote-Taker 2, but several time-consuming computations are skipped in order to analyze datasets as quickly as possible. Also, Cenote Shortcut only takes approximately 16 minutes to download and install (Cenote-Taker 2 takes about 2 hours due to large databases required for thorough sequence annotation). See installation instructions below.
+Cenote Shortcut is derived entirely from Cenote-Taker 2, but several time-consuming computations are skipped in order to analyze datasets as quickly as possible. Also, Cenote Shortcut only takes approximately **16 minutes to download and install** (Cenote-Taker 2 takes about 2 hours due to large databases required for thorough sequence annotation). See installation instructions below.
 
 ## Limitations
 Compared to Cenote-Taker 2, there are a few limitations.
@@ -74,6 +74,7 @@ OR
 --prune_prophage True --virus_domain_db virion --minimum_length_linear 5000 --lin_minimum_hallmark_genes 2
 ```
 While you should definitely ***definitely*** prune virus sequences from WGS datasets, [CheckV](https://bitbucket.org/berkeleylab/checkv/src/master/) also does a very good job (I'm still formally comparing these approaches) and you could use `--prune_prophage False` and feed the contigs from Cenote Shortcut into checkv end_to_end if you prefer.
+
 **Bacterial reference genome**
 ```
 --prune_prophage True --virus_domain_db virion --minimum_length_linear 5000 --lin_minimum_hallmark_genes 2
@@ -84,6 +85,7 @@ While you should definitely ***definitely*** prune virus sequences from WGS data
 ```
 If you also want DNA virus transcripts, or if your data is mixed RNA/DNA sequencing `--virus_domain_db standard` is the appropriate option.
 
+### CPUs and Memory
 For all runs more CPUs will make this run faster. Mem GBs should be about 50% or more of the CPU value.
 
 ## Citation

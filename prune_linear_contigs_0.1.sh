@@ -238,7 +238,7 @@ POST_PRUNE_CONTIGS=$( find * -maxdepth 1 -type f -regextype sed -regex ".*_vs[0-
 if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: Making prophage table " $MDYT
-	echo "SEQUENCE_FILE	CENOTE_PARENT_NAME	INPUT_PARENT_NAME	FINAL_LENGTH	PARENT_LENGTH	PRUNING_TRIED	CHROM_REMOVED	LEFT_JUNCTION	RIGHT_JUNCTION	HALLMARK_GENES	HALLMARK_AA_NAMES" > ${run_title}_PRUNING_INFO_TABLE.tsv
+	echo "SEQUENCE_FILE	CENOTE_PARENT_NAME	INPUT_PARENT_NAME	FINAL_LENGTH	PARENT_LENGTH	PRUNING_TRIED	CHROM_REMOVED	LEFT_JUNCTION	RIGHT_JUNCTION	HALLMARK_COUNT	HALLMARK_GENES	HALLMARK_AA_NAMES" > ${run_title}_PRUNING_INFO_TABLE.tsv
 	for CONTIG in $POST_PRUNE_CONTIGS ; do
 		CENOTE_PARENT=${CONTIG%_vs[0-9][0-9].fna}.fna
 		PARENT_LENGTH=$( bioawk -c fastx '{print length($seq)}' $CENOTE_PARENT )
@@ -247,7 +247,8 @@ if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 			LEFT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f1 )
 			RIGHT_COORD=$( head -n1 $CONTIG | cut -d " " -f2 | cut -d "-" -f2 )
 			PRUNING_TRIED="True"
-			if [ $LEFT_COORD == 0 ] && [ $RIGHT_COORD == $PARENT_LENGTH ] ; then
+			PQ_LENGTH=$(( ${PARENT_LENGTH}+1 ))
+			if [ $LEFT_COORD == 0 ] && [ $RIGHT_COORD == $PQ_LENGTH ] ; then
 				CHROM_REMOVED="False"
 			else
 				CHROM_REMOVED="True"
@@ -259,10 +260,10 @@ if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 			CHROM_REMOVED="False"
 		fi
 		ORIGINAL_NAME=$( head -n1 ${CONTIG%_vs[0-9][0-9].fna}.fna | cut -d " " -f2 )
-		### fix this
+		HALLMARK_COUNT=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{FS="\t"}{OFS="\t"}{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $5}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | wc -l | bc )
 		HALLMARK_GENES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{FS="\t"}{OFS="\t"}{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $5}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed 's/ /_/g ; s/,//g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
 		HALLMARK_AA_NAMES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $1}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
-		echo "${CONTIG}	${CENOTE_PARENT}	${ORIGINAL_NAME}	${PRUNED_LENGTH}	${PARENT_LENGTH}	${PRUNING_TRIED}	${CHROM_REMOVED}	${LEFT_COORD}	${RIGHT_COORD}	${HALLMARK_GENES}	${HALLMARK_AA_NAMES}" >> ${run_title}_PRUNING_INFO_TABLE.tsv
+		echo "${CONTIG}	${CENOTE_PARENT}	${ORIGINAL_NAME}	${PRUNED_LENGTH}	${PARENT_LENGTH}	${PRUNING_TRIED}	${CHROM_REMOVED}	${LEFT_COORD}	${RIGHT_COORD}	${HALLMARK_COUNT}	${HALLMARK_GENES}	${HALLMARK_AA_NAMES}" >> ${run_title}_PRUNING_INFO_TABLE.tsv
 		### finish this
 
 

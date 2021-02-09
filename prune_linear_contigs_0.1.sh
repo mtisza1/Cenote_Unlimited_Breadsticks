@@ -116,7 +116,7 @@ if [ -n "$vd_fastas" ] ; then
 		SPLIT_AA_RPS=$( find * -maxdepth 0 -type f -name "SPLIT_PRUNE_RPS_AA_*.fasta" )
 		MDYT=$( date +"%m-%d-%y---%T" )
 		echo "time update: running RPSBLAST on each sequence " $MDYT
-		echo "$SPLIT_AA_PRUNE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {}.fasta -line_length 200 -out {}.rpsb.out
+		echo "$SPLIT_AA_RPS" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {}.fasta -line_length 200 -out {}.rpsb.out
 		cat *rpsb.out > COMBINED_RESULTS.AA.rpsblast.out
 
 	fi
@@ -132,7 +132,6 @@ if [ -n "$vd_fastas" ] ; then
 		for TABLE1 in $HMM_TBL ; do
 			echo $TABLE1
 			CONTIG_LENGTH=$( bioawk -c fastx '{ print length($seq) }' ${TABLE1%.HMMSCAN_TABLE.txt}.fna )
-			echo " making blank Zs file"
 			for ((counter_g=(( 1 ));counter_g<=$CONTIG_LENGTH;counter_g++)); do
 				echo "$counter_g	Z"
 			done > ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab

@@ -40,7 +40,6 @@ optional_args.add_argument("--virus_domain_db", dest="virus_domain_db", type=str
 optional_args.add_argument("--lin_minimum_hallmark_genes", dest="LIN_MINIMUM_DOMAINS", type=int, default='1', help='Default: 1	Number of detected viral hallmark genes on a non-circular contig to be considered viral and recieve full annotation. WARNING: Only choose \'0\' if you have prefiltered the contig file to only contain putative viral contigs (using another method such as VirSorter or DeepVirFinder), or you are very confident you have physically enriched for virus particles very well (you might check with ViromeQC). Otherwise, the duration of the run will be extended many many times over, largely annotating non-viral contigs, which is not what Cenote_Shortcut is meant for. For unenriched samples, \'2\' might be more suitable, yielding a false positive rate near 0. ')
 optional_args.add_argument("--circ_minimum_hallmark_genes", dest="CIRC_MINIMUM_DOMAINS", type=int, default='1', help='Default:1	Number of detected viral hallmark genes on a circular contig to be considered viral and recieve full annotation. For samples physically enriched for virus particles, \'0\' can be used, but please treat circular contigs without known viral domains cautiously. For unenriched samples, \'1\' might be more suitable. ')
 optional_args.add_argument("--filter_out_plasmids", dest="FILTER_PLASMIDS", type=str2bool, default=True, help='Default: True	True - OR - False. If True, hallmark genes of plasmids will not count toward the minimum hallmark gene parameters. If False, hallmark genes of plasmids will count. Plasmid hallmark gene set is not necessarily comprehensive at this time. ')
-optional_args.add_argument("--large_genome", dest="LARGE_GENOME", type=str2bool, default=False, help='Default: False --	True - OR - False. Input is large cellular (likely bacterial) genome? Only effects run speed/parallelization scheme. Use True for complete bacterial genomes with contigs > 1 gigabase. Use False with metagenomes/metatranscriptomes')
 
 
 
@@ -75,5 +74,5 @@ else:
 
 
 
-subprocess.call(['bash', str(cenote_script_path) + '/cenote_shortcut_0.1.sh', str(args.original_contigs), str(args.run_title), str(args.circ_length_cutoff), str(args.linear_length_cutoff), str(args.virus_domain_db), str(args.LIN_MINIMUM_DOMAINS), str(args.PROPHAGE), str(args.FILTER_PLASMIDS), str(cenote_script_path), str(args.CIRC_MINIMUM_DOMAINS), str(args.LARGE_GENOME), str(args.MEM), str(args.CPU)])
+subprocess.call(['bash', str(cenote_script_path) + '/cenote_shortcut_0.1.sh', str(args.original_contigs), str(args.run_title), str(args.circ_length_cutoff), str(args.linear_length_cutoff), str(args.virus_domain_db), str(args.LIN_MINIMUM_DOMAINS), str(args.PROPHAGE), str(args.FILTER_PLASMIDS), str(cenote_script_path), str(args.CIRC_MINIMUM_DOMAINS), str(args.MEM), str(args.CPU)])
 

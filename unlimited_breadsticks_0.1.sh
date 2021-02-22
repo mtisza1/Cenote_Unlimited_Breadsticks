@@ -6,7 +6,7 @@ echo "00000000000000000000000000"
 echo "000000000$(tput setaf 4)^^^^^^^^$(tput setaf 2)000000000"
 echo "000000$(tput setaf 4)^^^^^^^^^^^^^^$(tput setaf 2)000000"
 echo "00000$(tput setaf 4)^^^^$(tput setaf 3)UNLIMITED$(tput setaf 4)^^^$(tput setaf 2)00000"
-echo "0000$(tput setaf 4)^^^$(tput setaf 3)BREADSTICKS$(tput setaf 4)^^$(tput setaf 2)00000"
+echo "0000$(tput setaf 4)^^^$(tput setaf 3)BREADSTICKS$(tput setaf 4)^^^$(tput setaf 2)00000"
 echo "00000$(tput setaf 4)^^^^^^^^^^^^^^^^$(tput setaf 2)00000"
 echo "000000$(tput setaf 4)^^^^^^^^^^^^^^$(tput setaf 2)000000"
 echo "000000000$(tput setaf 4)^^^^^^^^$(tput setaf 2)000000000"
@@ -218,7 +218,7 @@ if [ ! -z "$CONTIGS_NON_CIRCULAR" ] ;then
 	mkdir ../no_end_contigs_with_viral_domain
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: running prodigal on linear contigs " $MDYT
-	echo "$CONTIGS_NON_CIRCULAR" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t prodigal -a {}.AA.fasta -i {}.fasta -p meta -q
+	echo "$CONTIGS_NON_CIRCULAR" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t prodigal -a {}.AA.fasta -i {}.fasta -p meta -q >/dev/null 2>&1
 	for NO_END in $CONTIGS_NON_CIRCULAR ; do 
 		sed 's/ /@/g' ${NO_END%.fasta}.AA.fasta | bioawk -c fastx '{print}' | while read LINE ; do 
 			START_BASE=$( echo "$LINE" | cut -d "#" -f 2 | sed 's/@//g' ) ; 
@@ -232,7 +232,6 @@ if [ ! -z "$CONTIGS_NON_CIRCULAR" ] ;then
 	###instructions for large genomes
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: splitting AA files from cellular genome into equal parts and running hmmscan against virus hallmark gene database: $virus_domain_db " $MDYT	
-	mkdir ../no_end_contigs_with_viral_domain
 	cat $( find * -maxdepth 0 -type f -name "*.AA.sorted.fasta" ) > all_large_genome_proteins.AA.fasta
 	TOTAL_AA_SEQS=$( grep -F ">" all_large_genome_proteins.AA.fasta | wc -l | bc )
 	AA_SEQS_PER_FILE=$( echo "scale=0 ; $TOTAL_AA_SEQS / $CPU" | bc )
@@ -457,6 +456,23 @@ rm -f other_contigs/*.AA.fasta other_contigs/*.AA.sorted.fasta other_contigs/*.o
 rm -f no_end_contigs_with_viral_domain/*.called_hmmscan2.txt no_end_contigs_with_viral_domain/*.hmmscan2.out no_end_contigs_with_viral_domain/*all_hhpred_queries.AA.fasta no_end_contigs_with_viral_domain/*.all_start_stop.txt no_end_contigs_with_viral_domain/*.trnascan-se2.txt no_end_contigs_with_viral_domain/*.for_hhpred.txt no_end_contigs_with_viral_domain/*.for_blastp.txt no_end_contigs_with_viral_domain/*.HH.tbl no_end_contigs_with_viral_domain/*.hypo_start_stop.txt  no_end_contigs_with_viral_domain/*.remove_hypo.txt no_end_contigs_with_viral_domain/*.rps_nohits.fasta no_end_contigs_with_viral_domain/*.tax_guide.blastx.tab no_end_contigs_with_viral_domain/*.tax_orf.fasta no_end_contigs_with_viral_domain/*.trans.fasta no_end_contigs_with_viral_domain/*.called_hmmscan*.txt no_end_contigs_with_viral_domain/*.no_hmmscan*.fasta no_end_contigs_with_viral_domain/*.comb*.tbl 
 
 echo " "
+MDYT=$( date +"%m-%d-%y---%T" )
+echo "time update: Finishing " $MDYT
+if [ -s final_combined_virus_sequences_${run_title}.fna ] ; then
+	NUMBER_VIRUSES=$( grep -F ">" final_combined_virus_sequences_${run_title}.fna | wc -l | bc )
+	DTR_TOTAL=$( grep -F " DTR" final_combined_virus_sequences_${run_title}.fna | wc -l | bc )
+	NO_END_TOTAL=$( grep -F " no_end_feature" final_combined_virus_sequences_${run_title}.fna | wc -l | bc )
+	echo "$(tput setaf 3)Virus prediction summary:$(tput sgr 0)"
+	echo "$NUMBER_VIRUSES virus contigs were detected/predicted. $DTR_TOTAL contigs had DTRs/circularity. $NO_END_TOTAL were linear/had no end features"
+fi
+if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ] ; then
+	PRUNE_ATTEMPTS=$( awk '{OFS="\t"}{FS="\t"}{ if ($6=="True") {print}}' ${run_title}_PRUNING_INFO_TABLE.tsv | wc -l | bc )
+	PRUNE_REMOVE=$( awk '{OFS="\t"}{FS="\t"}{ if ($6=="True" && $7=="True") {print}}' ${run_title}_PRUNING_INFO_TABLE.tsv | wc -l | bc )
+	PRUNE_REMAIN=$( awk '{OFS="\t"}{FS="\t"}{ if ($6=="True" && $7=="False") {print}}' ${run_title}_PRUNING_INFO_TABLE.tsv | wc -l | bc )
+	echo "$(tput setaf 3)Prophage pruning summary:$(tput sgr 0)"
+	echo "$PRUNE_ATTEMPTS linear contigs > 10 kb were run through pruning module, and $PRUNE_REMOVE virus sub-contigs (putative prophages/proviruses) were extracted from these. $PRUNE_REMAIN virus contigs were kept intact."
+
+fi
 echo "$(tput setaf 3)output directory: "$run_title" $(tput sgr 0)"
 echo "$(tput setaf 3) >>>>>>CENOTE UNLIMITED BREADSTICKS HAS FINISHED SERVING BREADSTICKS<<<<<< $(tput sgr 0)"
 

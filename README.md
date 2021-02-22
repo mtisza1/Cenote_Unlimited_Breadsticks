@@ -1,4 +1,9 @@
 # Unlimited Breadsticks
+Consumers are presented a dillema at certain Italian-American eateries that provide "unlimited breadsticks" with every meal. On the one hand, the value of their dollar undoubtedly increases as more and more delicious breadsticks are eaten.  On the other hand, overconsumption of this appetizer can preclude thorough enjoyment and completion of the forthcoming entree. Furthermore, stomach aches may ensue, and the health of the consumer may ultimately be jeopardized. **Similarly**, virus hunters employing high throughput virus discovery tools on dataset after dataset may feel the exciting buzz as fasta files full of putative virus sequences pile up. However, without inspection of new sequences, e.g. via visualization of genome maps (not to mention sequence dereplication), databases may become filled with garbage sequences. 
+
+With that said, please enjoy **Unlimited Breadsticks**.
+
+
 Unlimited Breadsticks uses probabilistic models (i.e. HMMs) of virus hallmark genes to identify virus sequences from any dataset of contigs (e.g. metagenomic assemblies) or genomes (e.g. bacterial genomes). Optionally, Unlimited Breadsticks will use gene content information to remove flanking cellular chromosomes from contigs representing putative prophages. Generally, the prophage-cellular chromosome boundary will be identified within 100 nt - 2000 nt of the actual location.
 
 ```diff

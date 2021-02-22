@@ -48,7 +48,7 @@ if [ -n "$vd_fastas" ] ; then
 	fi
 	awk -v seq_per_file="$AA_SEQS_PER_FILE" 'BEGIN {n_seq=0;} /^>/ {if(n_seq%seq_per_file==0){file=sprintf("SPLIT_PRUNE_SEQ_AA_%d.fasta",n_seq);} print >> file; n_seq++; next;} { print >> file; }' < all_prunable_seq_proteins.AA.fasta
 	SPLIT_AA_PRUNE=$( find * -maxdepth 0 -type f -name "SPLIT_PRUNE_SEQ_AA_*.fasta" )
-	echo "$SPLIT_AA_PRUNE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan2.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/useful_hmms_baits_and_not2a {}.fasta
+	echo "$SPLIT_AA_PRUNE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan2.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/useful_hmms_baits_and_not2a {}.fasta >/dev/null 2>&1
 	cat SPLIT_PRUNE_SEQ_AA_*AA.hmmscan2.out | grep -v "^#" | sed 's/ \+/	/g' | sort -u -k3,3 > SPLIT_PRUNE_SEQ_COMBINED.AA.hmmscan2.sort.out
 	if [ -s SPLIT_PRUNE_SEQ_COMBINED.AA.hmmscan2.sort.out ] ; then
 		cut -f3 SPLIT_PRUNE_SEQ_COMBINED.AA.hmmscan2.sort.out | sed 's/[^_]*$//' | sed 's/\(.*\)_/\1/' | sort -u | while read HIT ; do
@@ -116,14 +116,13 @@ if [ -n "$vd_fastas" ] ; then
 		SPLIT_AA_RPS=$( find * -maxdepth 0 -type f -name "SPLIT_PRUNE_RPS_AA_*.fasta" )
 		MDYT=$( date +"%m-%d-%y---%T" )
 		echo "time update: running RPSBLAST on each sequence " $MDYT
-		echo "$SPLIT_AA_RPS" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {}.fasta -line_length 200 -out {}.rpsb.out
+		echo "$SPLIT_AA_RPS" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t rpsblast -evalue 1e-4 -num_descriptions 5 -num_alignments 1 -db ${CENOTE_SCRIPT_DIR}/cdd_rps_db/Cdd -seg yes -query {}.fasta -line_length 200 -out {}.rpsb.out >/dev/null 2>&1
 		cat *rpsb.out > COMBINED_RESULTS.AA.rpsblast.out
-
+		perl ${CENOTE_SCRIPT_DIR}/rpsblastreport_to_table2.pl
+		cut -f1 COMBINED_RESULTS.RPS_TABLE.txt | sed 's/[^_]*$//' | sed 's/\(.*\)_/\1/' | sort -u | while read CONTIG ; do
+			grep "^${CONTIG}_" COMBINED_RESULTS.RPS_TABLE.txt > ${CONTIG}.RPS_TABLE.txt
+		done
 	fi
-	perl ${CENOTE_SCRIPT_DIR}/rpsblastreport_to_table2.pl
-	cut -f1 COMBINED_RESULTS.RPS_TABLE.txt | sed 's/[^_]*$//' | sed 's/\(.*\)_/\1/' | sort -u | while read CONTIG ; do
-		grep "^${CONTIG}_" COMBINED_RESULTS.RPS_TABLE.txt > ${CONTIG}.RPS_TABLE.txt
-	done
 
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: parsing tables into virus_signal.seq files for hmmscan and rpsblast outputs " $MDYT
@@ -132,9 +131,7 @@ if [ -n "$vd_fastas" ] ; then
 		for TABLE1 in $HMM_TBL ; do
 			echo $TABLE1
 			CONTIG_LENGTH=$( bioawk -c fastx '{ print length($seq) }' ${TABLE1%.HMMSCAN_TABLE.txt}.fna )
-			for ((counter_g=(( 1 ));counter_g<=$CONTIG_LENGTH;counter_g++)); do
-				echo "$counter_g	Z"
-			done > ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+			awk -v lengthq="$CONTIG_LENGTH" 'BEGIN {for (i=1;i<=lengthq;i++) print i, "Z"}' | sed 's/ /	/g' > ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 
 
 			cat ${TABLE1%.HMMSCAN_TABLE.txt}.RPS_TABLE.txt | while read LINE ; do
@@ -142,34 +139,22 @@ if [ -n "$vd_fastas" ] ; then
 				RPS_END=$( echo "$LINE" | cut -f3 ) ; 
 				INFER=$( echo "$LINE" | cut -f4 ) ;
 				if [ $INFER == "HYPO" ] ; then
-					if [[ "$RPS_END" -gt "$RPS_START" ]] ; then 
-						for ((counter_f=(( $RPS_START ));counter_f<=$RPS_END;counter_f++)); do 
-							echo "$counter_f	X" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+					if [[ "$RPS_END" -gt "$RPS_START" ]] ; then
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=startq;i<=endq;i++) print i, "X"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					elif [[ "$RPS_START" -gt "$RPS_END" ]] ; then 
-						for ((counter_r=(( $RPS_END ));counter_r<=$RPS_START;counter_r++)); do 
-							echo "$counter_r	X" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab 
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=endq;i<=startq;i++) print i, "X"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					fi
 				elif [[ $INFER == *"PHA0"* ]] || grep -q "$INFER" ${CENOTE_SCRIPT_DIR}/viral_cdds_and_pfams_191028.txt ; then
 					if [[ "$RPS_END" -gt "$RPS_START" ]] ; then 
-						for ((counter_f=(( $RPS_START ));counter_f<=$RPS_END;counter_f++)); do 
-							echo "$counter_f	V" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=startq;i<=endq;i++) print i, "V"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					elif [[ "$RPS_START" -gt "$RPS_END" ]] ; then 
-						for ((counter_r=(( $RPS_END ));counter_r<=$RPS_START;counter_r++)); do 
-							echo "$counter_r	V" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=endq;i<=startq;i++) print i, "V"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					fi	
 				else
 					if [[ "$RPS_END" -gt "$RPS_START" ]] ; then 
-						for ((counter_f=(( $RPS_START ));counter_f<=$RPS_END;counter_f++)); do 
-							echo "$counter_f	Y" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=startq;i<=endq;i++) print i, "Y"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					elif [[ "$RPS_START" -gt "$RPS_END" ]] ; then 
-						for ((counter_r=(( $RPS_END ));counter_r<=$RPS_START;counter_r++)); do 
-							echo "$counter_r	Y" ; 
-						done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab 
+						awk -v startq="$RPS_START" -v endq="$RPS_END" 'BEGIN {for (i=endq;i<=startq;i++) print i, "Y"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
 					fi
 				fi
 			done	
@@ -178,13 +163,10 @@ if [ -n "$vd_fastas" ] ; then
 				VIR_START=$( echo "$LINE" | cut -f2 ) ; 
 				VIR_END=$( echo "$LINE" | cut -f3 ) ; 
 				if [[ "$VIR_END" -gt "$VIR_START" ]] ; then 
-					for ((counter_f=(( $VIR_START ));counter_f<=$VIR_END;counter_f++)); do 
-						echo "$counter_f	V" ; 
-					done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+					awk -v startq="$VIR_START" -v endq="$VIR_END" 'BEGIN {for (i=startq;i<=endq;i++) print i, "V"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab
+
 				elif [[ "$VIR_START" -gt "$VIR_END" ]] ; then 
-					for ((counter_r=(( $VIR_END ));counter_r<=$VIR_START;counter_r++)); do 
-						echo "$counter_r	V" ; 
-					done >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab 
+					awk -v startq="$VIR_START" -v endq="$VIR_END" 'BEGIN {for (i=endq;i<=startq;i++) print i, "V"}' | sed 's/ /	/g' >> ${TABLE1%.HMMSCAN_TABLE.txt}.virus_signal.tab 
 				fi ; 
 			done
 

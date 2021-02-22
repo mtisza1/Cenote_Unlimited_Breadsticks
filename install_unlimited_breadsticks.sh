@@ -1,20 +1,20 @@
 #!/bin/bash
 
-echo "Cenote_Shortcut installing now"
+echo "Cenote_Unlimited_Breadsticks installing now"
 MDYT=$( date +"%m-%d-%y---%T" )
 echo "time update, cloning git repo: " $MDYT
 
-if [ -s Cenote_Shortcut/cenote_shortcut.py ] ; then
-	cd Cenote_Shortcut
+if [ -s Cenote_Unlimited_Breadsticks/unlimited_breadsticks.py ] ; then
+	cd Cenote_Unlimited_Breadsticks
 	git pull
 else
-	git clone https://github.com/mtisza1/Cenote_Shortcut.git
+	git clone https://github.com/mtisza1/Cenote_Unlimited_Breadsticks.git
 
-	cd Cenote_Shortcut
+	cd Cenote_Unlimited_Breadsticks
 fi
 
 MDYT=$( date +"%m-%d-%y---%T" )
-echo "time update, cloning git repo: " $MDYT
+echo "time update, downloading LAST: " $MDYT
 if [ -s last-1047/README.txt ] ; then
 	echo "last already present"
 else
@@ -29,16 +29,16 @@ fi
 MDYT=$( date +"%m-%d-%y---%T" )
 echo "time update, creating conda environment: " $MDYT
 eval "$(conda shell.bash hook)"
-conda info --envs | if grep -q "cenote_shortcut_env" ; then
-	conda env remove --name cenote_shortcut_env
+conda info --envs | if grep -q "unlimited_breadsticks_env" ; then
+	conda env remove --name unlimited_breadsticks_env
 fi
-conda env create --file cenote_shortcut_env.yml
-conda activate cenote_shortcut_env
+conda env create --file unlimited_breadsticks_env.yml
+conda activate unlimited_breadsticks_env
 
-conda info --envs | sed 's/ \+/ /g' | if grep -q "cenote_shortcut_env \*" ; then 
-	echo "cenote_shortcut_env loaded" ; 
+conda info --envs | sed 's/ \+/ /g' | if grep -q "unlimited_breadsticks_env \*" ; then 
+	echo "unlimited_breadsticks_env loaded" ; 
 else 
-	echo "cenote_shortcut_env not loaded correctly" ;
+	echo "unlimited_breadsticks_env not loaded correctly" ;
 	exit 
 fi
 
@@ -68,6 +68,6 @@ else
 	cd ..
 fi
 
-echo "cenote_shortcut should now run. Use: python /path/to/Cenote_Shortcut/cenote_shortcut.py"
+echo "unlimited_breadsticks should now run. Use: python /path/to/Cenote_Unlimited_Breadsticks/unlimited_breadsticks_env.py"
 MDYT=$( date +"%m-%d-%y---%T" )
 echo "time update, FINISHED: " $MDYT

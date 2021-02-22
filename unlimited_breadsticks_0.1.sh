@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Cenote-Taker Logo
+# Unlimited Breadsticks Logo
 echo "$(tput setaf 2)00000000000000000000000000"
 echo "00000000000000000000000000"
 echo "000000000$(tput setaf 4)^^^^^^^^$(tput setaf 2)000000000"
 echo "000000$(tput setaf 4)^^^^^^^^^^^^^^$(tput setaf 2)000000"
-echo "00000$(tput setaf 4)^^^^^$(tput setaf 3)CENOTE$(tput setaf 4)^^^^^$(tput setaf 2)00000"
-echo "00000$(tput setaf 4)^^^^$(tput setaf 3)SHORTCUT!$(tput setaf 4)^^^^$(tput setaf 2)0000"
+echo "00000$(tput setaf 4)^^^^$(tput setaf 3)UNLIMITED$(tput setaf 4)^^^$(tput setaf 2)00000"
+echo "0000$(tput setaf 4)^^^$(tput setaf 3)BREADSTICKS$(tput setaf 4)^^$(tput setaf 2)00000"
 echo "00000$(tput setaf 4)^^^^^^^^^^^^^^^^$(tput setaf 2)00000"
 echo "000000$(tput setaf 4)^^^^^^^^^^^^^^$(tput setaf 2)000000"
 echo "000000000$(tput setaf 4)^^^^^^^^$(tput setaf 2)000000000"
@@ -48,6 +48,11 @@ echo "number of CPUs available for run:  $CPU"
 echo "@@@@@@@@@@@@@@@@@@@@@@@@@"
 
 
+if [ "$PROPHAGE" == "True" ] && [ $LIN_MINIMUM_DOMAINS -le 0 ] ; then
+	echo "Prophage pruning requires --lin_minimum_hallmark_genes >= 1. changing to:"
+	echo "--lin_minimum_hallmark_genes 1"
+	LIN_MINIMUM_DOMAINS=1
+fi
 
 MDYT=$( date +"%m-%d-%y---%T" )
 echo "time update: locating inputs: " $MDYT
@@ -101,8 +106,8 @@ if [ ${original_contigs: -6} == ".fasta" ]; then
 	echo "$(tput setaf 5)File with .fasta extension detected, attempting to keep contigs over $LENGTH_MINIMUM nt and find circular sequences with apc.pl$(tput sgr 0)"
 	bioawk -v run_var="$run_title" -v contig_cutoff="$LENGTH_MINIMUM" -c fastx '{ if(length($seq) > contig_cutoff) { print ">"run_var NR" "$name; print $seq }}' $original_contigs > ${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta ;
 	cd $run_title
-	echo "cenote_shortcut" > ${run_title}_CONTIG_SUMMARY.tsv
-	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta ;
+	echo "unlimited_breadsticks" > ${run_title}_CONTIG_SUMMARY.tsv
+	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta  >/dev/null 2>&1
 	rm -f apc_aln*
 	APC_CIRCS=$( find * -maxdepth 0 -type f -name "${run_title}*.fa" )
 	if [ -n "$APC_CIRCS" ] ;then
@@ -111,6 +116,7 @@ if [ ${original_contigs: -6} == ".fasta" ]; then
 			CIRC_NEW_NAME=$( echo "$CIRC_SEQ_NAME" | sed 's/>//g ; s/ .*//g' )
 			grep -A1 "^$CIRC_SEQ_NAME" ../${original_contigs%.fasta}.over_${LENGTH_MINIMUM}nt.fasta | sed '/--/d' > ${CIRC_NEW_NAME}.fasta
 			rm -f $fa1
+			echo ${CIRC_NEW_NAME}.fasta" is circular/has DTRs"
 		done 
 	else
 		echo "No circular contigs detected."
@@ -118,8 +124,8 @@ if [ ${original_contigs: -6} == ".fasta" ]; then
 elif [ ${original_contigs: -6} == ".fastg" ]; then
 	bioawk -v contig_cutoff="$LENGTH_MINIMUM" -c fastx '{ if(length($seq) > contig_cutoff) {print }}' $original_contigs | grep "[a-zA-Z0-9]:\|[a-zA-Z0-9];" | grep -v "':" | awk '{ print ">"$1 ; print $2 }' | sed 's/:.*//g; s/;.*//g' | bioawk -v run_var="$run_title" -c fastx '{ print ">"run_var NR" "$name; print $seq }' > ${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta
 	cd $run_title
-	echo "cenote_shortcut" > ${run_title}_CONTIG_SUMMARY.tsv
-	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta ;
+	echo "unlimited_breadsticks" > ${run_title}_CONTIG_SUMMARY.tsv
+	perl ${CENOTE_SCRIPT_DIR}/apc_cenote1.pl -b $run_title -c $CENOTE_SCRIPT_DIR ../${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta >/dev/null 2>&1
 	rm -f apc_aln*
 	APC_CIRCS=$( find * -maxdepth 0 * -type f -name "${run_title}*.fa" )
 	if [ -n "$APC_CIRCS" ] ;then
@@ -128,6 +134,7 @@ elif [ ${original_contigs: -6} == ".fastg" ]; then
 			CIRC_NEW_NAME=$( echo "$CIRC_SEQ_NAME" | sed 's/>//g ; s/ .*//g' )
 			grep -A1 "^$CIRC_SEQ_NAME" ../${original_contigs%.fastg}.over_${LENGTH_MINIMUM}nt.fasta | sed '/--/d' > ${CIRC_NEW_NAME}.fasta
 			rm -f $fa1
+			echo ${CIRC_NEW_NAME}.fasta" is circular/has DTRs"
 		done 
 	else
 		echo "No circular contigs detected."
@@ -235,12 +242,12 @@ if [ ! -z "$CONTIGS_NON_CIRCULAR" ] ;then
 	awk -v seq_per_file="$AA_SEQS_PER_FILE" 'BEGIN {n_seq=0;} /^>/ {if(n_seq%seq_per_file==0){file=sprintf("SPLIT_LARGE_GENOME_AA_%d.fasta",n_seq);} print >> file; n_seq++; next;} { print >> file; }' < all_large_genome_proteins.AA.fasta
 	SPLIT_AA_LARGE=$( find * -maxdepth 0 -type f -name "SPLIT_LARGE_GENOME_AA_*.fasta" )
 	if  [[ $virus_domain_db = "standard" ]] ; then
-		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta
-		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan_replicate.out --cpu 1 -E 1e-15 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_replication_clusters3 {}.fasta	
+		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta >/dev/null 2>&1
+		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan_replicate.out --cpu 1 -E 1e-15 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_replication_clusters3 {}.fasta >/dev/null 2>&1
 	elif [[ $virus_domain_db = "virion" ]]; then
-		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta		
+		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta >/dev/null 2>&1	
 	elif [[ $virus_domain_db = "rna_virus" ]]; then
-		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/rna_virus_rdrp_capsid_hmms1 {}.fasta
+		echo "$SPLIT_AA_LARGE" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/rna_virus_rdrp_capsid_hmms1 {}.fasta >/dev/null 2>&1
 	else
 		echo "$(tput setaf 5) Incorrect argument given for virus_domain_db variable. Try standard, virion, or rna_virus as arguments. For this run, no contigs with viral domains but without circularity or ITRs will be detected $(tput sgr 0)"
 		rm -f ./*{0..9}.fasta
@@ -298,7 +305,7 @@ if [ ! -z "$CIRCLES_AND_ITRS" ] ; then
 	mkdir DTR_contigs_with_viral_domain
 	MDYT=$( date +"%m-%d-%y---%T" )
 	echo "time update: Calling ORFs for circular/DTR sequences with prodigal " $MDYT
-	echo "$CIRCLES_AND_ITRS" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t prodigal -a {}.AA.fasta -i {}.fasta -p meta -q
+	echo "$CIRCLES_AND_ITRS" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t prodigal -a {}.AA.fasta -i {}.fasta -p meta -q >/dev/null 2>&1
 	for CIRC in $CIRCLES_AND_ITRS ; do 
 		sed 's/ /@/g' ${CIRC%.fasta}.AA.fasta | bioawk -c fastx '{print}' | while read LINE ; do 
 			START_BASE=$( echo "$LINE" | cut -d "#" -f 2 | sed 's/@//g' ) ; 
@@ -320,12 +327,12 @@ if [ ! -z "$CIRCLES_AND_ITRS" ] ; then
 	echo "time update: running hmmscan on circular/DTR contigs " $MDYT
 	SPLIT_AA_CIRC=$( find * -maxdepth 0 -type f -name "SPLIT_CIRCULAR_AA_*.fasta" )
 	if  [[ $virus_domain_db = "standard" ]] ; then
-		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta
-		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan_replicate.out --cpu 1 -E 1e-15 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_replication_clusters3 {}.fasta	
+		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta >/dev/null 2>&1
+		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan_replicate.out --cpu 1 -E 1e-15 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_replication_clusters3 {}.fasta >/dev/null 2>&1
 	elif [[ $virus_domain_db = "virion" ]]; then
-		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta		
+		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/virus_specific_baits_plus_missed6a {}.fasta >/dev/null 2>&1
 	elif [[ $virus_domain_db = "rna_virus" ]]; then
-		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/rna_virus_rdrp_capsid_hmms1 {}.fasta
+		echo "$SPLIT_AA_CIRC" | sed 's/.fasta//g' | xargs -n 1 -I {} -P $CPU -t hmmscan --tblout {}.AA.hmmscan.out --cpu 1 -E 1e-8 --noali ${CENOTE_SCRIPT_DIR}/hmmscan_DBs/rna_virus_rdrp_capsid_hmms1 {}.fasta >/dev/null 2>&1
 	else
 		echo "$(tput setaf 5) Incorrect argument given for virus_domain_db variable. Try standard, virion, or rna_virus as arguments. For this run, no contigs with viral domains but without circularity or ITRs will be detected $(tput sgr 0)"
 		rm -f ./*{0..9}.fasta
@@ -411,7 +418,7 @@ fi
 ### script for pruning no_end contigs with viral domains
 
 if [ ! -z "$LIST_OF_VIRAL_DOMAIN_CONTIGS" ] && [ "$PROPHAGE" == "True" ] ;then
-	echo "$(tput setaf 3) Starting prung of non-DTR/circular contigs with viral domains $(tput sgr 0)"
+	echo "$(tput setaf 3) Starting pruning of non-DTR/circular contigs with viral domains $(tput sgr 0)"
 
 	. ${CENOTE_SCRIPT_DIR}/prune_linear_contigs_0.1.sh
 fi
@@ -451,7 +458,7 @@ rm -f no_end_contigs_with_viral_domain/*.called_hmmscan2.txt no_end_contigs_with
 
 echo " "
 echo "$(tput setaf 3)output directory: "$run_title" $(tput sgr 0)"
-echo "$(tput setaf 3) >>>>>>CENOTE SHORTCUT HAS FINISHED SHORTCUTTING CENOTES<<<<<< $(tput sgr 0)"
+echo "$(tput setaf 3) >>>>>>CENOTE UNLIMITED BREADSTICKS HAS FINISHED SERVING BREADSTICKS<<<<<< $(tput sgr 0)"
 
 
 

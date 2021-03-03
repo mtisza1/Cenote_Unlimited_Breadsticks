@@ -241,9 +241,16 @@ if [ -n "$POST_PRUNE_CONTIGS" ] ; then
 		HALLMARK_GENES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{FS="\t"}{OFS="\t"}{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $5}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed 's/ /_/g ; s/,//g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
 		HALLMARK_AA_NAMES=$( awk -v LEFTQ="$LEFT_COORD" -v RIGHTQ="$RIGHT_COORD" '{ if ($2>LEFTQ && $2<RIGHTQ && $3>LEFTQ && $3<RIGHTQ) {print $1}}' ${CONTIG%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\|/g' )
 		echo "${CONTIG}	${CENOTE_PARENT}	${ORIGINAL_NAME}	${PRUNED_LENGTH}	${PARENT_LENGTH}	${PRUNING_TRIED}	${CHROM_REMOVED}	${LEFT_COORD}	${RIGHT_COORD}	${HALLMARK_COUNT}	${HALLMARK_GENES}	${HALLMARK_AA_NAMES}" >> ${run_title}_PRUNING_INFO_TABLE.tsv
-		### finish this
 
+	done
+fi
 
+if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ] ; then 
+	tail -n+2 ${run_title}_PRUNING_INFO_TABLE.tsv | while read LINE ; do 
+		SEQ=$( echo "$LINE" | cut -f1 ) ; 
+		LEFT=$( echo "$LINE" | cut -f8 ) ; 
+		RIGHT=$( echo "$LINE" | cut -f9 ) ; 
+		( echo "#""$LINE" ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.HMMSCAN_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.RPS_TABLE.txt ) | awk 'NR<2{print $0;next}{print $0| "sort -u -k1,1"}' > ${SEQ%.fna}.gene_sketch.tsv
 	done
 fi
 

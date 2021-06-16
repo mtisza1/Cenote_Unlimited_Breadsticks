@@ -8,15 +8,24 @@ Unlimited Breadsticks uses probabilistic models (i.e. HMMs) of virus hallmark ge
 
 ```diff
 + The code is currently functional. Feel free to consume Unlimited Breadsticks at will.
++ Minor update to handle very large contig files AND update to HMM databases on June 16th, 2021
 ```
 Unlimited Breadsticks is derived from [Cenote-Taker 2](https://github.com/mtisza1/Cenote-Taker2), but several time-consuming computations are skipped in order to analyze datasets as quickly as possible. Also, Unlimited Breadsticks only takes approximately **16 minutes to download and install** (Cenote-Taker 2 takes about 2 hours due to large databases required for thorough sequence annotation). See installation instructions below.
+
+To update from older versions: 
+```
+conda activate unlimited_breadsticks_env
+cd Cenote_Unlimited_Breadsticks
+git pull
+python update_ub_databases.py --hmm True
+```
 
 ## Limitations
 Compared to Cenote-Taker 2, there are a few limitations.
 
 1) Unlimited Breadsticks does not do post-hallmark-gene-identification computations to flag plasmid and conjugative element sequences that occasionally slip through.
 2) Unlimited Breadsticks does not make genome maps for manual inspection of putative viruses.
-3) Contigs are not extensively annotated by Unlimited Breadsticks.
+3) Contigs are not extensively annotated by Unlimited Breadsticks. No genome maps are created.
 
 ## Installation
 
@@ -33,9 +42,9 @@ wget  https://raw.githubusercontent.com/mtisza1/Cenote_Unlimited_Breadsticks/mai
 4. Run the install script. Includes downloading all required databases. Should take 15-20 minutes. 
 ```
 bash install_unlimited_breadsticks.sh 2>&1 | tee install_unlimited_breadsticks.log
-
-(The "2>&1 | tee install_unlimited_breadsticks.log" part isn't necessary, but it will save the installation notes/errors to a log file)
 ```
+(The "2>&1 | tee install_unlimited_breadsticks.log" part isn't necessary, but it will save the installation notes/errors to a log file)
+
 That's it!
 
 # Running Unlimited Breadsticks
@@ -43,9 +52,14 @@ That's it!
 ```
 conda activate unlimited_breadsticks_env
 ```
-2. Run the python script (see options below).
+2. Run the python script without arguments to bring up the quick menu (see options below).
 ```
 python /path/to/Cenote_Unlimited_Breadsticks/unlimited_breadsticks.py
+```
+3. Run some contigs with Unlimited Breadsticks:
+
+```
+python /path/to/Cenote_Unlimited_Breadsticks/unlimited_breadsticks.py -c MY_CONTIGS.fasta -r my_contigs1_ub -m 32 -t 32 -p true -db virion
 ```
 Options:
 ```
@@ -138,7 +152,7 @@ optional arguments:
 ```
 -p False -db standard
 ```
-You might apply a size cutoff for linear contigs as well, e.g. ` --minimum_length_linear 3000` OR `--minimum_length_linear 5000`
+You might apply a size cutoff for linear contigs as well, e.g. ` --minimum_length_linear 3000` OR `--minimum_length_linear 5000`. Changing length minima does not affect false positive rates, but short linear contigs may not be useful, depending on your goals.
 
 **Whole genome shotgun (WGS) metagenomic assembly:**
 ```

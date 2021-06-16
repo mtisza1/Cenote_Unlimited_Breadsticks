@@ -263,7 +263,9 @@ if [ -s ${run_title}_PRUNING_INFO_TABLE.tsv ] ; then
 		SEQ=$( echo "$LINE" | cut -f1 ) ; 
 		LEFT=$( echo "$LINE" | cut -f8 ) ; 
 		RIGHT=$( echo "$LINE" | cut -f9 ) ; 
-		( echo "#""$LINE" ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.HMMSCAN_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.RPS_TABLE.txt ) | awk 'NR<2{print $0;next}{print $0| "sort -u -k1,1"}' > ${SEQ%.fna}.gene_sketch.tsv
+		if [ -s ${SEQ%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt ] && [ -s ${SEQ%_vs[0-9][0-9].fna}.HMMSCAN_TABLE.txt ] && [ -s ${SEQ%_vs[0-9][0-9].fna}.RPS_TABLE.txt ] ; then
+			( echo "#""$LINE" ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.VIRUS_BAIT_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.HMMSCAN_TABLE.txt ; awk -v lq="$LEFT" -v rq="$RIGHT" '{OFS="\t"}{FS="\t"}{if ($2>=lq && $2<=rq) {print}}' ${SEQ%_vs[0-9][0-9].fna}.RPS_TABLE.txt ) | awk 'NR<2{print $0;next}{print $0| "sort -u -k1,1"}' > ${SEQ%.fna}.gene_sketch.tsv
+		fi
 	done
 fi
 

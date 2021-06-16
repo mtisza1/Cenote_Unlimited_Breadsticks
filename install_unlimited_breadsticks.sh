@@ -68,6 +68,6 @@ else
 	cd ..
 fi
 
-echo "unlimited_breadsticks should now run. Use: python /path/to/Cenote_Unlimited_Breadsticks/unlimited_breadsticks_env.py"
+echo "unlimited_breadsticks should now run. Use: python /path/to/Cenote_Unlimited_Breadsticks/unlimited_breadsticks.py"
 MDYT=$( date +"%m-%d-%y---%T" )
 echo "time update, FINISHED: " $MDYT
